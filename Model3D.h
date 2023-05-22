@@ -25,6 +25,7 @@ namespace Model
 			std::vector<GLuint> getMeshIndices();
 			tinyobj::attrib_t getAttributes();
 
+			void DrawModel();
 			void CleanUp();
 		
 		private:

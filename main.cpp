@@ -63,13 +63,7 @@ int main(void)
         glUniform1f(xLoc, x_mod);
         glUniform1f(yLoc, y_mod);
 
-        glBindVertexArray(bunny.getVAO());
-        glDrawElements(
-            GL_TRIANGLES,
-            bunny.getMeshIndices().size(),
-            GL_UNSIGNED_INT,
-            0
-        );
+        bunny.DrawModel();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

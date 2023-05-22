@@ -111,6 +111,18 @@ void Model3D::VertexInit()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Model3D::DrawModel()
+{
+    glBindVertexArray(this->VAO);
+
+    glDrawElements(
+        GL_TRIANGLES,
+        this->mesh_indices.size(),
+        GL_UNSIGNED_INT,
+        0
+    );
+}
+
 void Model3D::CleanUp()
 {
     glDeleteVertexArrays(1, &this->VAO);
@@ -121,19 +133,4 @@ void Model3D::CleanUp()
 GLuint Model3D::getShaderProgram()
 {
     return this->shaderProgram;
-}
-
-GLuint Model3D::getVAO()
-{
-    return this->VAO;
-}
-
-std::vector<GLuint> Model3D::getMeshIndices()
-{
-    return this->mesh_indices;
-}
-
-tinyobj::attrib_t Model3D::getAttributes()
-{
-    return this->attributes;
 }
