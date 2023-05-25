@@ -111,8 +111,12 @@ void Model3D::VertexInit()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Model3D::DrawModel()
+void Model3D::DrawModel(glm::mat4 ptr)
 {
+    unsigned int transformLoc = glGetUniformLocation(this->shaderProgram, "transform");
+
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(ptr));
+
     glBindVertexArray(this->VAO);
 
     glDrawElements(

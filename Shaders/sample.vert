@@ -10,5 +10,5 @@ void main()
 {
 	
 	vec3 newPos = vec3(aPos.x + x, aPos.y + y, aPos.z);
-	gl_Position = transform * vec4(newPos, 1.0);
+	gl_Position = transform * vec4(aPos, 1.0);
 }
