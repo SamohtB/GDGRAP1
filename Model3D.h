@@ -29,7 +29,7 @@ namespace Model
 			std::vector<GLuint> getMeshIndices();
 			tinyobj::attrib_t getAttributes();
 
-			void DrawModel(glm::mat4 ptr);
+			void DrawModel(glm::mat4 transform_matrix, glm::mat4 projection_matrix);
 			void CleanUp();
 		
 		private:
