@@ -1,5 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <cmath>
 
 #include "Model3D.h"
@@ -57,11 +62,6 @@ int main(void)
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
-
-        unsigned int xLoc = glGetUniformLocation(bunny.getShaderProgram(), "x");
-        unsigned int yLoc = glGetUniformLocation(bunny.getShaderProgram(), "y");
-        glUniform1f(xLoc, x_mod);
-        glUniform1f(yLoc, y_mod);
 
         bunny.DrawModel();
 
