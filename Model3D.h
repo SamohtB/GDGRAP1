@@ -19,17 +19,15 @@
 
 namespace Model
 {
+
 	class Model3D
 	{
 		public:
 			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath);
 
 			GLuint getShaderProgram();
-			GLuint getVAO();
-			std::vector<GLuint> getMeshIndices();
-			tinyobj::attrib_t getAttributes();
 
-			void DrawModel(glm::mat4 transform_matrix, glm::mat4 projection_matrix);
+			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix);
 			void CleanUp();
 		
 		private:

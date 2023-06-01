@@ -57,7 +57,7 @@ void Model3D::LoadModel(std::string sMeshPath)
         &error,
         path.c_str());
 
-    for (int i = 0; i < shapes[0].mesh.indices.size(); i++)
+    for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
     {
         this->mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
     }
@@ -111,10 +111,13 @@ void Model3D::VertexInit()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 projection_matrix)
+void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix)
 {
     unsigned int transformLoc = glGetUniformLocation(this->shaderProgram, "transform");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform_matrix));
+
+    unsigned int viewLoc = glGetUniformLocation(this->shaderProgram, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view_matrix));
 
     unsigned int projectionLoc = glGetUniformLocation(this->shaderProgram, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
