@@ -28,6 +28,7 @@ namespace Model
 			GLuint getShaderProgram();
 
 			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix);
+			void SetColor(const glm::vec3& color);
 			void CleanUp();
 		
 		private:

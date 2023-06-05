@@ -143,3 +143,9 @@ GLuint Model3D::getShaderProgram()
 {
     return this->shaderProgram;
 }
+
+void Model3D::SetColor(const glm::vec3& color)
+{
+    unsigned int colorLoc = glGetUniformLocation(this->shaderProgram, "objectColor");
+    glUniform3fv(colorLoc, 1, glm::value_ptr(color));
+}
