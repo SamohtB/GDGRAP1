@@ -17,6 +17,8 @@
 #include <fstream>
 #include <sstream>
 
+enum Axis {X =0, Y, Z};
+
 namespace Model
 {
 
@@ -25,9 +27,10 @@ namespace Model
 		public:
 			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath);
 
-			GLuint getShaderProgram();
-
-			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix);
+			void DrawModel(glm::mat4 view_matrix, glm::mat4 projection_matrix);
+			void SetTransform(glm::vec3 translate, float pitch, float yaw, float roll, float scale);
+			void Move(glm::vec3 increment);
+			void Rotate(Axis axis, float angleInc);
 			void CleanUp();
 		
 		private:
@@ -35,10 +38,12 @@ namespace Model
 			void LoadModel(std::string sMeshPath);
 			void VertexInit();
 
+
 		private:
 			GLuint VAO, VBO, EBO;
 			tinyobj::attrib_t attributes;
 			std::vector<GLuint> mesh_indices;
+			glm::mat4 transform_matrix;
 
 			GLuint shaderProgram;
 	};
