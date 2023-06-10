@@ -3,6 +3,7 @@
 #define MODEL_OBJECT_H
 
 #include "tiny_obj_loader.h"
+#include "stb_image.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -23,24 +24,39 @@ namespace Model
 	class Model3D
 	{
 		public:
-			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath);
-
-			GLuint getShaderProgram();
+			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath);
 
 			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix);
 			void CleanUp();
 		
 		private:
 			void LoadShaders(std::string sVertPath, std::string sFragPath);
+			void LoadTexture(std::string sTexPath);
 			void LoadModel(std::string sMeshPath);
 			void VertexInit();
 
 		private:
-			GLuint VAO, VBO, EBO;
+			GLuint VAO, VBO, VBO_UV, EBO;
 			tinyobj::attrib_t attributes;
 			std::vector<GLuint> mesh_indices;
 
 			GLuint shaderProgram;
+
+			int img_width;
+			int img_height;
+			int colorChannels;
+			GLuint texture;
+
+			GLfloat UV[16]{
+				0.f, 1.f,
+				0.f, 0.f,
+				1.f, 1.f,
+				1.f, 0.f,
+				1.f, 1.f,
+				1.f, 0.f,
+				0.f, 1.f,
+				0.f, 0.f
+			};
 	};
 }
 

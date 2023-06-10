@@ -10,11 +10,11 @@
 #include "Model3D.h"
 
 glm::vec3 translate = glm::vec3(0.0f, 0.0f, -5.0f);
-glm::vec3 scale = glm::vec3(10.0f, 10.0f, 10.0f);
+glm::vec3 scale = glm::vec3(2.0f, 2.0f, 2.0f);
 glm::vec3 rotateX = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 rotateY = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
-glm::vec3 cameraCenter = glm::vec3(0.0f, 3.0f, 0.0f);               //camera's Target
+glm::vec3 cameraCenter = glm::vec3(0.0f, 0.0f, 0.0f);               //camera's Target
 float thetaX = 0.0f;
 float thetaY = 0.0f;
 float FOV = 60.0f;
@@ -110,7 +110,7 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    Model::Model3D bunny("3D/bunny.obj", "Shaders/sample.vert", "Shaders/sample.frag");
+    Model::Model3D bunny("3D/myCube.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/ayaya.png");
 
     glfwSetKeyCallback(window, Key_Callback);
 
@@ -131,12 +131,13 @@ int main(void)
     );      
     */
 
+    glEnable(GL_DEPTH_TEST);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         glm::mat4 cameraPosMatrix = glm::translate(identity_matrix, cameraPos * -1.0f);
 

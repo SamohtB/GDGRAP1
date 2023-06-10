@@ -1,12 +1,15 @@
 #define TINYOBJLOADER_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
 #include "Model3D.h"
 
 using namespace Model;
 
-Model3D::Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath)
+Model3D::Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath)
 {
     this->LoadShaders(sVertPath, sFragPath);
+    this->LoadTexture(sTexPath);
 	this->LoadModel(sMeshPath);
+    this->VertexInit();
 }
 
 void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
@@ -24,7 +27,7 @@ void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
     glShaderSource(vertShader, 1, &v, NULL);
     glCompileShader(vertShader);
     glAttachShader(shaderProgram, vertShader);
-    
+
 
     //Fragment Shader
     std::fstream fragSrc(sFragPath);
@@ -40,6 +43,24 @@ void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
 
 
     glLinkProgram(shaderProgram);
+}
+
+void Model3D::LoadTexture(std::string sTexPath)
+{
+    stbi_set_flip_vertically_on_load(true);
+
+    const char* path = sTexPath.c_str();
+    unsigned char* tex_bytes = stbi_load(path, &this->img_width, &this->img_height, &this->colorChannels, 0);
+
+    glGenTextures(1, &this->texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, this->texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->img_width, this->img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(tex_bytes);
 }
 
 void Model3D::LoadModel(std::string sMeshPath)
@@ -61,14 +82,13 @@ void Model3D::LoadModel(std::string sMeshPath)
     {
         this->mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
     }
-
-    this->VertexInit();
 }
 
 void Model3D::VertexInit()
 {
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
+    glGenBuffers(1, &this->VBO_UV);
     glGenBuffers(1, &this->EBO);
 
     //tells opengl that we're working on this VAO
@@ -76,6 +96,11 @@ void Model3D::VertexInit()
 
     //use shaders
     glUseProgram(this->shaderProgram);
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO_UV);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * (sizeof(this->UV) / sizeof(this->UV[0])), &this->UV[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
 
     //Assign a VBO to the VAO
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
@@ -122,6 +147,10 @@ void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::
     unsigned int projectionLoc = glGetUniformLocation(this->shaderProgram, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
+    GLuint tex0Address = glGetUniformLocation(this->shaderProgram, "tex0");
+    glBindTexture(GL_TEXTURE_2D, this->texture);
+    glUniform1i(tex0Address, 0);
+
     glBindVertexArray(this->VAO);
 
     glDrawElements(
@@ -137,9 +166,4 @@ void Model3D::CleanUp()
     glDeleteVertexArrays(1, &this->VAO);
     glDeleteBuffers(1, &this->VBO);
     glDeleteBuffers(1, &this->EBO);
-}
-
-GLuint Model3D::getShaderProgram()
-{
-    return this->shaderProgram;
 }
