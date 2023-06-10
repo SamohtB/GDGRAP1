@@ -154,6 +154,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="main.h" />
     <ClInclude Include="Model3D.h" />
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
