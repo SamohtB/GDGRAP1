@@ -11,7 +11,16 @@ using namespace Model;
  */
 Model3D::Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath)
 {
-    this->transform_matrix= glm::mat4(1.0f);
+    pos_x = 0.0f;
+    pos_y = 0.0f;
+    pos_z = 0.0f;
+    rot_pitch = 0.0f;
+    rot_yaw = 0.0f;
+    rot_roll = 0.0f;
+    scl_x = 1.0f;
+    scl_y = 1.0f;
+    scl_z = 1.0f;
+
     this->LoadShaders(sVertPath, sFragPath);
 	this->LoadModel(sMeshPath);
     this->VertexInit();
@@ -130,21 +139,29 @@ void Model3D::VertexInit()
  *      roll:       rotate by . . . along z-axis
  *      scale:      scale by
  */
-void Model3D::SetTransform(glm::vec3 translate, float pitch, float yaw, float roll, float scale)
+void Model3D::SetTransform(glm::vec3 translate, float pitch, float yaw, float roll, glm::vec3 scale)
 {
-    this->transform_matrix = glm::translate(this->transform_matrix, translate);
-    this->transform_matrix = glm::scale(this->transform_matrix, glm::vec3(scale));
-    this->transform_matrix = glm::rotate(this->transform_matrix, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-    this->transform_matrix = glm::rotate(this->transform_matrix, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-    this->transform_matrix = glm::rotate(this->transform_matrix, glm::radians(roll), glm::vec3(0.0f, 0.0f, 1.0f));
+    pos_x = translate.x;
+    pos_y = translate.y;
+    pos_z = translate.z;
+    rot_pitch = pitch;
+    rot_yaw = yaw;
+    rot_roll = roll;
+    scl_x = scale.x;
+    scl_y = scale.y;
+    scl_z = scale.z;
 }
 
-void Model3D::Move(glm::vec3 translate)
+/* Creates the transform matrix fro existing internal parameters */
+glm::mat4 Model3D::BuildTransformMatrix()
 {
-}
-
-void Model3D::Rotate(Axis axis, float Increment)
-{
+    glm::mat4 transform_matrix = glm::mat4(1.0f);
+    transform_matrix = glm::translate(transform_matrix, glm::vec3(pos_x, pos_y, pos_z));
+    transform_matrix = glm::scale(transform_matrix, glm::vec3(scl_x, scl_y, scl_z));
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(rot_pitch), glm::vec3(1.f, 0.f, 0.f));
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(rot_yaw), glm::vec3(0.f, 1.f, 0.f));
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(rot_roll), glm::vec3(0.f, 0.f, 1.f));
+    return transform_matrix;
 }
 
 /*  Draws the object
@@ -154,9 +171,10 @@ void Model3D::Rotate(Axis axis, float Increment)
  */
 void Model3D::DrawModel(glm::mat4 view_matrix, glm::mat4 projection_matrix)
 {
+    glm::mat4 transform_matrix = BuildTransformMatrix();
 
     unsigned int transformLoc = glGetUniformLocation(this->shaderProgram, "transform");
-    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(this->transform_matrix));
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform_matrix));
 
     unsigned int viewLoc = glGetUniformLocation(this->shaderProgram, "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view_matrix));

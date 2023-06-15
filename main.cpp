@@ -26,22 +26,28 @@ float deltaTime = 0.0f;
 
 void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    float movementSpeed = 200.0f;
+    glm::vec3 cameraFront = glm::normalize(cameraCenter - cameraPos);
+    glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, worldUp));
+
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_REPEAT)
     {
-        cameraPos.y += 300.f * deltaTime;
+        cameraPos += movementSpeed * deltaTime * cameraFront;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_REPEAT)
     {
-        cameraPos.y -= 300.f * deltaTime;
+        cameraPos -= movementSpeed * deltaTime * cameraFront;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_REPEAT)
     {
-        cameraPos.x -= 300.f * deltaTime;
+        cameraPos -= movementSpeed * deltaTime * cameraRight;
+        cameraCenter -= movementSpeed * deltaTime * cameraRight;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_D) == GLFW_REPEAT)
     {
-        cameraPos.x += 300.f * deltaTime;
+        cameraPos += movementSpeed * deltaTime * cameraRight;
+        cameraCenter += movementSpeed * deltaTime * cameraRight;
     }
 }
 
@@ -59,10 +65,10 @@ void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-    lastX = xpos;
-    lastY = ypos;
+    float xoffset = (float)xpos - lastX;
+    float yoffset = lastY - (float)ypos; // reversed since y-coordinates go from bottom to top
+    lastX = (float)xpos;
+    lastY = (float)ypos;
 
     float sensitivity = 0.1f;
     xoffset *= sensitivity;
@@ -87,7 +93,7 @@ void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
  * Also handles the spawn input
  */
 void SpawnObject(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::vector<Model::Model3D*>* container, 
-    glm::vec3 translate, float pitch, float yaw, float roll, float scale)
+    glm::vec3 translate, float pitch, float yaw, float roll, glm::vec3 scale)
 {
      Model::Model3D* temp = new Model::Model3D(sMeshPath, sVertPath, sFragPath);
      temp->SetTransform(translate, pitch, yaw, roll, scale);
@@ -103,16 +109,17 @@ void SpawnModel(int state, std::vector<Model::Model3D*>& vecModel, glm::vec3& sp
         {
             std::cout << "SPAWN!" << std::endl;
 
+            /* Blaster A, Blaster B, and Blaster C are taken from kenny.nl's blaster kit */
             SpawnObject(
                 "3D/blasterA.obj",          //Path to 3D Model
                 "Shaders/sample.vert",      //Path to vertex shader
                 "Shaders/sample.frag",      //Path to fragment shader
                 &vecModel,                  //vector container for storage
                 spawnPos,                   //translation
-                0.0f,                       //along x rotation
-                0.0f,                       //along y rotation
+                pitch,                       //along x rotation
+                yaw,                       //along y rotation
                 0.0f,                       //along z rotation
-                5.0f                        //scale
+                glm::vec3(5.f, 5.f, 5.f)    //scale
             );
 
             glfwSetTime(0.0f);
@@ -159,13 +166,13 @@ int main(void)
     glfwSetTime(3.0f);
 
     //For Delta Time Function
-    previousTime = glfwGetTime();
+    previousTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        double currentTime = glfwGetTime();
+        float currentTime = (float)glfwGetTime();
         deltaTime = currentTime - previousTime;
         previousTime = currentTime;
 
@@ -194,7 +201,7 @@ int main(void)
         /* * * * * * * * * * * * * * * * * */
 
         //Draw Call, we pass on the view and projection matrices
-        for (int i = 0; i < vecModel.size(); i++)
+        for (size_t i = 0; i < vecModel.size(); i++)
         {
             vecModel[i]->DrawModel(view_matrix, projection);
         }
@@ -204,7 +211,7 @@ int main(void)
     }
 
     //Destroy VBOs, VAOs, and EBOs
-    for (int i = 0; i < vecModel.size(); i++)
+    for (size_t i = 0; i < vecModel.size(); i++)
     {
         vecModel[i]->CleanUp();
     }

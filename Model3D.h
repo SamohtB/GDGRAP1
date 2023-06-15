@@ -28,22 +28,29 @@ namespace Model
 			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath);
 
 			void DrawModel(glm::mat4 view_matrix, glm::mat4 projection_matrix);
-			void SetTransform(glm::vec3 translate, float pitch, float yaw, float roll, float scale);
-			void Move(glm::vec3 increment);
-			void Rotate(Axis axis, float angleInc);
+			void SetTransform(glm::vec3 translate, float pitch, float yaw, float roll, glm::vec3 scale);
 			void CleanUp();
 		
 		private:
+			glm::mat4 BuildTransformMatrix();
 			void LoadShaders(std::string sVertPath, std::string sFragPath);
 			void LoadModel(std::string sMeshPath);
 			void VertexInit();
-
 
 		private:
 			GLuint VAO, VBO, EBO;
 			tinyobj::attrib_t attributes;
 			std::vector<GLuint> mesh_indices;
-			glm::mat4 transform_matrix;
+
+			float pos_x;
+			float pos_y;
+			float pos_z;
+			float rot_pitch;
+			float rot_yaw;
+			float rot_roll;
+			float scl_x;
+			float scl_y;
+			float scl_z;
 
 			GLuint shaderProgram;
 	};
