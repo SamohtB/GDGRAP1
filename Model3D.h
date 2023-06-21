@@ -39,6 +39,7 @@ namespace Model
 			GLuint VAO, VBO, VBO_UV, EBO;
 			tinyobj::attrib_t attributes;
 			std::vector<GLuint> mesh_indices;
+			std::vector<GLfloat> fullVertexData;
 
 			GLuint shaderProgram;
 

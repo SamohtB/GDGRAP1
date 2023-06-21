@@ -82,14 +82,30 @@ void Model3D::LoadModel(std::string sMeshPath)
     {
         this->mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
     }
+
+    for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
+    {
+        tinyobj::index_t vData = shapes[0].mesh.indices[i];
+
+        fullVertexData.push_back(attributes.vertices[vData.vertex_index * 3]);      // X pos
+        fullVertexData.push_back(attributes.vertices[vData.vertex_index * 3 + 1]);  // Y pos
+        fullVertexData.push_back(attributes.vertices[vData.vertex_index * 3 + 2]);  // Z pos
+
+        fullVertexData.push_back(attributes.normals[vData.normal_index * 3]);       // R nor
+        fullVertexData.push_back(attributes.normals[vData.normal_index * 3 + 1]);   // S nor
+        fullVertexData.push_back(attributes.normals[vData.normal_index * 3 + 2]);   // T nor
+
+        fullVertexData.push_back(attributes.texcoords[vData.texcoord_index * 2]);       // U tex
+        fullVertexData.push_back(attributes.texcoords[vData.texcoord_index * 2 + 1]);   // V tex
+    }
 }
 
 void Model3D::VertexInit()
 {
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
-    glGenBuffers(1, &this->VBO_UV);
-    glGenBuffers(1, &this->EBO);
+    //glGenBuffers(1, &this->VBO_UV);
+    //glGenBuffers(1, &this->EBO);
 
     //tells opengl that we're working on this VAO
     glBindVertexArray(this->VAO);
@@ -97,43 +113,31 @@ void Model3D::VertexInit()
     //use shaders
     glUseProgram(this->shaderProgram);
 
-    glBindBuffer(GL_ARRAY_BUFFER, this->VBO_UV);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * (sizeof(this->UV) / sizeof(this->UV[0])), &this->UV[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(2);
-
     //Assign a VBO to the VAO
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * this->fullVertexData.size(), this->fullVertexData.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)0);
 
-    glBufferData(
-        GL_ARRAY_BUFFER,                                //type of buffer
-        sizeof(GL_FLOAT) * this->attributes.vertices.size(),  //size in bytes
-        &this->attributes.vertices[0],                  //data array
-        GL_STATIC_DRAW
-    );
+    GLuint normalsPtr = 3 * sizeof(GLfloat);
 
-    //tell openGL what to do with the data
-    glVertexAttribPointer(
-        0, //position data in the transform
-        3, //xyz
-        GL_FLOAT, //array data type
-        GL_FALSE,
-        3 * sizeof(GL_FLOAT),
-        (void*)0
-    );
+    GLuint uvPtr = 6 * sizeof(GLfloat);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)uvPtr);
 
-    //enable index 0
+
+    ////Assign a EBO to the VAO
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * this->mesh_indices.size(), this->mesh_indices.data(), GL_STATIC_DRAW);
+    ////Assign a VBO_UV to the VAO
+    //glBindBuffer(GL_ARRAY_BUFFER, this->VBO_UV);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * (sizeof(this->UV) / sizeof(this->UV[0])), &this->UV[0], GL_STATIC_DRAW);
+    //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
     glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 
-                    sizeof(GLuint) * this->mesh_indices.size(), 
-                    this->mesh_indices.data(), 
-                    GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix)
@@ -153,12 +157,14 @@ void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::
 
     glBindVertexArray(this->VAO);
 
-    glDrawElements(
-        GL_TRIANGLES,
-        this->mesh_indices.size(),
-        GL_UNSIGNED_INT,
-        0
-    );
+    glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 5);
+
+    //glDrawElements(
+    //    GL_TRIANGLES,
+    //    this->mesh_indices.size(),
+    //    GL_UNSIGNED_INT,
+    //    0
+    //);
 }
 
 void Model3D::CleanUp()

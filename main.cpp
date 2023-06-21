@@ -10,7 +10,7 @@
 #include "Model3D.h"
 
 glm::vec3 translate = glm::vec3(0.0f, 0.0f, -5.0f);
-glm::vec3 scale = glm::vec3(2.0f, 2.0f, 2.0f);
+glm::vec3 scale = glm::vec3(0.1f, 0.1f, 0.1f);
 glm::vec3 rotateX = glm::vec3(1.0f, 0.0f, 0.0f);
 glm::vec3 rotateY = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -110,7 +110,7 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    Model::Model3D bunny("3D/myCube.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/ayaya.png");
+    Model::Model3D bunny("3D/djSword.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/ayaya.png");
 
     glfwSetKeyCallback(window, Key_Callback);
 
@@ -132,6 +132,12 @@ int main(void)
     */
 
     glEnable(GL_DEPTH_TEST);
+
+    //Timer function set to 0
+    glfwSetTime(0.0f);
+
+    //For Delta Time Function
+    float previousTime = (float)glfwGetTime();
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -165,6 +171,13 @@ int main(void)
         cameraOrientation[2][2] = -F.z;
 
         //glm::mat4 view_matrix = cameraOrientation * cameraPosMatrix;
+
+        float currentTime = (float)glfwGetTime();
+        float deltaTime = currentTime - previousTime;
+        previousTime = currentTime;
+
+        //rotation
+        thetaY += 1.01f * deltaTime;
 
         glm::mat4 view_matrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
         glm::mat4 projection = glm::perspective(glm::radians(FOV), (height / width), 0.1f, 100.0f);
