@@ -119,6 +119,7 @@ void Model3D::VertexInit()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)0);
 
     GLuint normalsPtr = 3 * sizeof(GLfloat);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)normalsPtr);
 
     GLuint uvPtr = 6 * sizeof(GLfloat);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)uvPtr);
@@ -133,6 +134,7 @@ void Model3D::VertexInit()
     //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -140,7 +142,9 @@ void Model3D::VertexInit()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix)
+void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, 
+    glm::vec3 lightPos, glm::vec3 lightColor, float ambientStr, glm::vec3 ambientColor, glm::vec3 cameraPos,
+    float specStr, float specPhong)
 {
     unsigned int transformLoc = glGetUniformLocation(this->shaderProgram, "transform");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform_matrix));
@@ -155,9 +159,30 @@ void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::
     glBindTexture(GL_TEXTURE_2D, this->texture);
     glUniform1i(tex0Address, 0);
 
+    GLuint lightAddress = glGetUniformLocation(this->shaderProgram, "lightPos");
+    glUniform3fv(lightAddress, 1, glm::value_ptr(lightPos));
+
+    GLuint lightColorAddress = glGetUniformLocation(this->shaderProgram, "lightColor");
+    glUniform3fv(lightColorAddress, 1, glm::value_ptr(lightColor));
+
+    GLuint ambientStrAddress = glGetUniformLocation(this->shaderProgram, "ambientStr");
+    glUniform1f(ambientStrAddress, ambientStr);
+
+    GLuint ambientColorAddress = glGetUniformLocation(this->shaderProgram, "ambientColor");
+    glUniform3fv(ambientColorAddress, 1, glm::value_ptr(ambientColor));
+
+    GLuint cameraPosAddress = glGetUniformLocation(this->shaderProgram, "cameraPos");
+    glUniform3fv(cameraPosAddress, 1, glm::value_ptr(cameraPos));
+
+    GLuint specStrAddress = glGetUniformLocation(this->shaderProgram, "specStr");
+    glUniform1f(specStrAddress, specStr);
+
+    GLuint specPhongAddress = glGetUniformLocation(this->shaderProgram, "specPhong");
+    glUniform1f(specPhongAddress, specPhong);
+
     glBindVertexArray(this->VAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 5);
+    glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 8);
 
     //glDrawElements(
     //    GL_TRIANGLES,

@@ -26,7 +26,9 @@ namespace Model
 		public:
 			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath);
 
-			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix);
+			void DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, 
+				glm::vec3 lightPos, glm::vec3 lightColor, float ambientStr, glm::vec3 ambientColor, 
+				glm::vec3 cameraPos, float specStr, float specPhong);
 			void CleanUp();
 		
 		private:

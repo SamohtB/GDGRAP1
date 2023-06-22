@@ -94,6 +94,15 @@ int main(void)
 
     glm::mat4 identity_matrix = glm::mat4(1.0f);
 
+    glm::vec3 lightPos = glm::vec3(-10, 3, 0);
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    float ambientStr = 0.2f;
+    glm::vec3 ambientColor = lightColor;
+
+    float specStr = 0.5f;
+    float specPhong = 16;
+
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -186,7 +195,8 @@ int main(void)
         transform_matrix = glm::rotate(transform_matrix, thetaX, rotateX);
         transform_matrix = glm::rotate(transform_matrix, thetaY, rotateY);
        
-        bunny.DrawModel(transform_matrix, view_matrix, projection);
+        bunny.DrawModel(transform_matrix, view_matrix, projection, lightPos, lightColor, 
+            ambientStr, ambientColor, cameraPos, specStr, specPhong);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
