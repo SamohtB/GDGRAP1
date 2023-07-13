@@ -19,73 +19,6 @@ float thetaX = 0.0f;
 float thetaY = 0.0f;
 float FOV = 60.0f;
 
-void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod)
-{
-    //WASD
-    if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        cameraPos.x -= 0.1f;
-        cameraCenter.x -= 0.1f;
-    }
-    if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        cameraPos.x += 0.1f;
-        cameraCenter.x += 0.1f;
-    }
-    if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        translate.y += 0.1f;
-    }
-    if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        translate.y -= 0.1f;
-    }
-
-    //ROTATE Y
-    if (key == GLFW_KEY_UP && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        thetaX -= 0.1f;
-    }
-    if (key == GLFW_KEY_DOWN && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        thetaX += 0.1f;
-    }
-
-    //ROTATE X
-    if (key == GLFW_KEY_LEFT && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        thetaY -= 0.1f;
-    }
-    if (key == GLFW_KEY_RIGHT && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        thetaY += 0.1f;
-    }
-
-    //SCALE
-    if (key == GLFW_KEY_Q && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        scale.x += 0.1f;
-        scale.y += 0.1f;
-        scale.z += 0.1f;
-    }
-    if (key == GLFW_KEY_E && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        scale.x -= 0.1f;
-        scale.y -= 0.1f;
-        scale.z -= 0.1f;
-    }
-
-    //ZOOM
-    if (key == GLFW_KEY_Z && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        FOV -= 1.0f;
-    }
-    if (key == GLFW_KEY_X && (action == GLFW_PRESS || action == GLFW_REPEAT))
-    {
-        FOV += 1.0f;
-    }
-}
-
 int main(void)
 {
     GLFWwindow* window;
@@ -120,8 +53,6 @@ int main(void)
     gladLoadGL();
 
     Model::Model3D bunny("3D/djSword.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/ayaya.png");
-
-    glfwSetKeyCallback(window, Key_Callback);
 
     glViewport( 0,                      //min x
                 0,                      //min y
@@ -190,6 +121,15 @@ int main(void)
 
         glm::mat4 view_matrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
         glm::mat4 projection = glm::perspective(glm::radians(FOV), (height / width), 0.1f, 100.0f);
+
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+
+        bunny.DrawSkybox(view_matrix, projection);
+
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+
         glm::mat4 transform_matrix = glm::translate(identity_matrix, translate);
         transform_matrix = glm::scale(transform_matrix, scale);
         transform_matrix = glm::rotate(transform_matrix, thetaX, rotateX);

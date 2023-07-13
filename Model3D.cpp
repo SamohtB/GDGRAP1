@@ -6,16 +6,20 @@ using namespace Model;
 
 Model3D::Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath)
 {
-    this->LoadShaders(sVertPath, sFragPath);
-    this->LoadTexture(sTexPath);
-	this->LoadModel(sMeshPath);
-    this->VertexInit();
+    this->shaderProgram = LoadShaders(sVertPath, sFragPath);
+    this->skyboxProgram = this->LoadShaders("Shaders/skybox.vert", "Shaders/skybox.frag");
+
+	LoadModel(sMeshPath);
+
+    VertexInit();
+    LoadTexture(sTexPath);
+
+    SkyboxInit();
+    LoadSkyboxTexture();
 }
 
-void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
+GLuint Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
 {
-    this->shaderProgram = glCreateProgram();
-
     //Vertex Shader
     std::fstream vertSrc(sVertPath);
     std::stringstream vertBuff;
@@ -26,8 +30,7 @@ void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertShader, 1, &v, NULL);
     glCompileShader(vertShader);
-    glAttachShader(shaderProgram, vertShader);
-
+    
 
     //Fragment Shader
     std::fstream fragSrc(sFragPath);
@@ -39,10 +42,14 @@ void Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragShader, 1, &f, NULL);
     glCompileShader(fragShader);
+    
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertShader);
     glAttachShader(shaderProgram, fragShader);
 
-
     glLinkProgram(shaderProgram);
+
+    return shaderProgram;
 }
 
 void Model3D::LoadTexture(std::string sTexPath)
@@ -100,12 +107,28 @@ void Model3D::LoadModel(std::string sMeshPath)
     }
 }
 
+void Model3D::SkyboxInit()
+{
+    glGenVertexArrays(1, &this->skybox_VAO);
+    glGenBuffers(1, &this->skybox_VBO);
+    glGenBuffers(1, &this->skybox_EBO);
+
+    glBindVertexArray(skybox_VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, skybox_VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(this->skyboxVertices), &this->skyboxVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skybox_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_INT) * 36, &skyboxIndices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+}
+
 void Model3D::VertexInit()
 {
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
-    //glGenBuffers(1, &this->VBO_UV);
-    //glGenBuffers(1, &this->EBO);
 
     //tells opengl that we're working on this VAO
     glBindVertexArray(this->VAO);
@@ -124,15 +147,6 @@ void Model3D::VertexInit()
     GLuint uvPtr = 6 * sizeof(GLfloat);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)uvPtr);
 
-
-    ////Assign a EBO to the VAO
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * this->mesh_indices.size(), this->mesh_indices.data(), GL_STATIC_DRAW);
-    ////Assign a VBO_UV to the VAO
-    //glBindBuffer(GL_ARRAY_BUFFER, this->VBO_UV);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * (sizeof(this->UV) / sizeof(this->UV[0])), &this->UV[0], GL_STATIC_DRAW);
-    //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
@@ -142,10 +156,54 @@ void Model3D::VertexInit()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Model3D::LoadSkyboxTexture()
+{
+    glGenTextures(1, &this->skyboxTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, this->skyboxTexture);
+
+    //Avoid Pixilated texture
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    //Avoid Tiling
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        int w, h, skyCChannel;
+        stbi_set_flip_vertically_on_load(false);
+
+        unsigned char* data = stbi_load(facesSkybox[i].c_str(), &w, &h, &skyCChannel, 0);
+
+        if (data)
+        {
+            glTexImage2D(
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                0, 
+                GL_RGB, 
+                w, 
+                h,
+                0,
+                GL_RGB, 
+                GL_UNSIGNED_BYTE, 
+                data
+            );
+
+            stbi_image_free(data);
+        }
+    }
+
+    stbi_set_flip_vertically_on_load(true);
+}
+
 void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, 
     glm::vec3 lightPos, glm::vec3 lightColor, float ambientStr, glm::vec3 ambientColor, glm::vec3 cameraPos,
     float specStr, float specPhong)
 {
+    glUseProgram(this->shaderProgram);
+
     unsigned int transformLoc = glGetUniformLocation(this->shaderProgram, "transform");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform_matrix));
 
@@ -192,9 +250,28 @@ void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::
     //);
 }
 
+void Model3D::DrawSkybox(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
+{
+    glUseProgram(this->skyboxProgram);
+
+    glm::mat4 sky_view = glm::mat4(1.0f);
+    sky_view = glm::mat4(glm::mat3(viewMatrix));
+
+    unsigned int skyProjectionLoc = glGetUniformLocation(this->skyboxProgram, "projection");
+    glUniformMatrix4fv(skyProjectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+
+    unsigned int skyViewLoc = glGetUniformLocation(this->skyboxProgram, "view");
+    glUniformMatrix4fv(skyViewLoc, 1, GL_FALSE, glm::value_ptr(sky_view));
+
+    glBindVertexArray(skybox_VAO);
+    glActiveTexture(0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, this->skyboxTexture);
+
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+}
+
 void Model3D::CleanUp()
 {
     glDeleteVertexArrays(1, &this->VAO);
     glDeleteBuffers(1, &this->VBO);
-    glDeleteBuffers(1, &this->EBO);
 }
