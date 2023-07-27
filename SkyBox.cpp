@@ -14,6 +14,7 @@ SkyBox::~SkyBox()
     glDeleteVertexArrays(1, &this->VAO);
     glDeleteBuffers(1, &this->VBO);
     glDeleteBuffers(1, &this->EBO);
+    glDeleteTextures(1, &this->texture);
 }
 
 void SkyBox::LoadShaders(std::string sVertPath, std::string sFragPath)

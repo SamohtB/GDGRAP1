@@ -5,8 +5,29 @@ using namespace Controller;
 Game::Game()
 {
     Initialize();
-    bunny = new Model3D("3D/djSword.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/ayaya.png");
+    bunny = new Model3D("3D/Mesh/plane.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/Texture/brickwall.jpg",
+        "3D/Texture/brickwall_normal.jpg");
     skybox = new SkyBox("Shaders/skybox.vert", "Shaders/skybox.frag");
+
+    translate = glm::vec3(0.0f, 0.0f, -5.0f);
+    scale = glm::vec3(4.f, 4.f, 1.f);
+
+    pitchTheta = 0.0f;
+    yawTheta = 0.0f;
+    rollTheta = -90.0f;
+    FOV = 60.0f;
+
+    cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
+    cameraCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    lightPos = glm::vec3(-10, 3, 0);
+    lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+    ambientStr = 0.2f;
+    ambientColor = lightColor;
+
+    specStr = 0.5f;
+    specPhong = 16;
 }
 
 void Game::Initialize()
@@ -33,6 +54,9 @@ void Game::Initialize()
 void Game::Run()
 {
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glfwSetTime(0.0f);
@@ -75,8 +99,11 @@ void Game::Update(float tDeltaTime)
 
     transform_matrix = glm::translate(glm::mat4(1.0f), translate);
     transform_matrix = glm::scale(transform_matrix, scale);
-    transform_matrix = glm::rotate(transform_matrix, pitchTheta, pitchAxis);
-    transform_matrix = glm::rotate(transform_matrix, yawTheta, yawAxis);
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(pitchTheta), pitchAxis);
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(yawTheta), yawAxis);
+    transform_matrix = glm::rotate(transform_matrix, glm::radians(rollTheta), rollAxis);
+
+    //pitchTheta += 1.0f * tDeltaTime;
 }
 
 void Game::Render()

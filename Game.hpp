@@ -39,25 +39,27 @@ namespace Controller
 		private:
 			/* Game Window Properties */
 			GLFWwindow* gameWindow;
-			const float SCREEN_WIDTH = 600.0f;
-			const float SCREEN_HEIGHT = 600.0f;
+			const int SCREEN_WIDTH = 600;
+			const int SCREEN_HEIGHT = 600;
 			const float FRAME_RATE_LIMIT = 60.0f;
-			const float ASPECT_RATIO =  SCREEN_HEIGHT / SCREEN_WIDTH;
+			const float ASPECT_RATIO =  (float)SCREEN_HEIGHT / (float)SCREEN_WIDTH;
 
 			/* Transform Properties */
-			glm::vec3 translate = glm::vec3(0.0f, 0.0f, -5.0f);
-			glm::vec3 scale = glm::vec3(0.1f, 0.1f, 0.1f);
+			glm::vec3 translate;
+			glm::vec3 scale;
 
 			const glm::vec3 pitchAxis = glm::vec3(1.0f, 0.0f, 0.0f);
 			const glm::vec3 yawAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+			const glm::vec3 rollAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 
-			float pitchTheta = 0.0f;
-			float yawTheta = 0.0f;
-			float FOV = 60.0f;
+			float pitchTheta;
+			float yawTheta;
+			float rollTheta;
+			float FOV;
 
 			/* Camera Properties */
-			glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
-			glm::vec3 cameraCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+			glm::vec3 cameraPos;
+			glm::vec3 cameraCenter;
 			const glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
 
 			/* MATRICES */
@@ -66,14 +68,12 @@ namespace Controller
 			glm::mat4 projection_matrix;
 
 			/* Light Properties */
-			glm::vec3 lightPos = glm::vec3(-10, 3, 0);
-			glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-
-			float ambientStr = 0.2f;
-			glm::vec3 ambientColor = lightColor;
-
-			float specStr = 0.5f;
-			float specPhong = 16;
+			glm::vec3 lightPos;
+			glm::vec3 lightColor;
+			float ambientStr;
+			glm::vec3 ambientColor;
+			float specStr;
+			float specPhong;
 	};
 }
 

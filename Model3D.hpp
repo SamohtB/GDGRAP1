@@ -23,7 +23,8 @@ namespace Model
 	class Model3D
 	{
 		public:
-			Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath);
+			Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, 
+				std::string strTexPath, std::string strNormPath);
 			~Model3D();
 
 			void Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix,
@@ -31,9 +32,10 @@ namespace Model
 				float spec_str, float spec_phong, glm::vec3 camera_pos);
 		
 		private:
-			void LoadShaders(std::string sVertPath, std::string sFragPath);
-			void LoadTexture(std::string sTexPath);
-			void LoadModel(std::string sMeshPath);
+			void LoadShaders(std::string strVertPath, std::string strFragPath);
+			void LoadTexture(std::string strTexPath);
+			void LoadNormals(std::string strNormPath);
+			void LoadModel(std::string strMeshPath);
 			void VertexInit();
 
 		private:
@@ -42,6 +44,7 @@ namespace Model
 
 			GLuint shaderProgram;
 			GLuint texture;
+			GLuint normal_texture;
 	};
 }
 

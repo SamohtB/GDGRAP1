@@ -3,6 +3,8 @@
 out vec4 FragColor; //pixel color
 
 uniform sampler2D tex0;
+uniform sampler2D norm_tex;
+
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 
@@ -18,10 +20,10 @@ in vec3 normCoord;
 in vec3 fragPos;
 
 void main()
-{//					  r		g	   b	a
-	//FragColor = vec4(1.0f, 0.4f, 0.8f, 1.0f);
+{
+	vec3 normal = texture(norm_tex, texCoord).rgb;
+	normal = normalize(normal * 2.0 - 1.0);
 
-	vec3 normal = normalize(normCoord);
 	vec3 lightDir = normalize(lightPos - fragPos);
 	
 	float diff = max(dot(normal, lightDir), 0.0);
@@ -35,5 +37,12 @@ void main()
 	float spec = pow(max(dot(reflectDir, viewDir), 0.1), specPhong);
 	vec3 specColor = spec * specStr * lightColor;
 
-	FragColor = vec4(specColor + diffuse + ambientCol, 1.0) * texture(tex0, texCoord);
+	vec4 pixelColor = texture(tex0, texCoord);
+
+	if(pixelColor.a < 0.1)
+	{
+		discard;
+	}
+
+	FragColor = vec4(specColor + diffuse + ambientCol, 1.0) * pixelColor;
 }

@@ -4,18 +4,22 @@
 
 using namespace Model;
 
-Model3D::Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, std::string strTexPath)
+Model3D::Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, 
+    std::string strTexPath, std::string strNormPath)
 {
     LoadShaders(strVertPath, strFragPath);
 	LoadModel(strMeshPath);
     VertexInit();
     LoadTexture(strTexPath);
+    LoadNormals(strNormPath);
 }
 
 Model3D::~Model3D()
 {
     glDeleteVertexArrays(1, &this->VAO);
     glDeleteBuffers(1, &this->VBO);
+    glDeleteTextures(1, &this->texture);
+    glDeleteTextures(1, &this->normal_texture);
 }
 
 void Model3D::LoadShaders(std::string strVertPath, std::string strFragPath)
@@ -52,9 +56,9 @@ void Model3D::LoadShaders(std::string strVertPath, std::string strFragPath)
     this->shaderProgram = shaderProgram;
 }
 
-void Model3D::LoadModel(std::string sMeshPath)
+void Model3D::LoadModel(std::string strMeshPath)
 {
-    std::string path = sMeshPath;
+    std::string path = strMeshPath;
     tinyobj::attrib_t attributes;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> material;
@@ -119,19 +123,59 @@ void Model3D::VertexInit()
     glBindVertexArray(0);
 }
 
-void Model3D::LoadTexture(std::string sTexPath)
+void Model3D::LoadTexture(std::string strTexPath)
 {
     stbi_set_flip_vertically_on_load(true);
     int img_width, img_height, colorChannels;
 
-    const char* path = sTexPath.c_str();
+    const char* path = strTexPath.c_str();
     unsigned char* tex_bytes = stbi_load(path, &img_width, &img_height, &colorChannels, 0);
 
     glGenTextures(1, &this->texture);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+    std::string strFileType = strTexPath.substr(strTexPath.length() - 3);
+
+    if (strFileType == "png")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+    }
+    else if (strFileType == "jpg")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex_bytes);
+    }
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(tex_bytes);
+}
+
+void Model3D::LoadNormals(std::string strNormPath)
+{
+    stbi_set_flip_vertically_on_load(true);
+    int img_width, img_height, colorChannels;
+
+    const char* path = strNormPath.c_str();
+    unsigned char* tex_bytes = stbi_load(path, &img_width, &img_height, &colorChannels, 0);
+
+    glGenTextures(1, &this->normal_texture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, this->normal_texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    std::string strFileType = strNormPath.substr(strNormPath.length() - 3);
+
+    if (strFileType == "png")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+    }
+    else if (strFileType == "jpg")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex_bytes);
+    }
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -153,9 +197,15 @@ void Model3D::Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 
     unsigned int projectionLoc = glGetUniformLocation(this->shaderProgram, "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection_matrix));
 
-    GLuint tex0Address = glGetUniformLocation(this->shaderProgram, "tex0");
+    glActiveTexture(GL_TEXTURE0);
+    GLuint tex0Loc = glGetUniformLocation(this->shaderProgram, "tex0");
     glBindTexture(GL_TEXTURE_2D, this->texture);
-    glUniform1i(tex0Address, 0);
+    glUniform1i(tex0Loc, 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    GLuint tex1Loc = glGetUniformLocation(this->shaderProgram, "norm_tex");
+    glBindTexture(GL_TEXTURE_2D, this->normal_texture);
+    glUniform1i(tex1Loc, 1);
 
     GLuint lightAddress = glGetUniformLocation(this->shaderProgram, "lightPos");
     glUniform3fv(lightAddress, 1, glm::value_ptr(light_pos));
