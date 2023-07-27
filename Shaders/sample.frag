@@ -36,10 +36,11 @@ void main()
 	vec3 viewDir = normalize(cameraPos - fragPos);
 	vec3 reflectDir = reflect(-lightDir, normal);
 
-	float spec = pow(max(dot(reflectDir, viewDir), 0.1), specPhong);
+	float spec = pow(max(dot(reflectDir, viewDir), 0.0), specPhong);
 	vec3 specColor = spec * specStr * lightColor;
 
 	float distance = distance(lightPos, fragPos);
+	float intensity = 50 * (1 / (distance * distance));
 
 	vec4 pixelColor = texture(tex0, texCoord);
 
@@ -48,5 +49,7 @@ void main()
 		discard;
 	}
 
-	FragColor = vec4(specColor + diffuse + ambientCol, 1.0) * pixelColor;
+	vec3 finalColor = ((specColor * 3) + diffuse + ambientCol) * intensity;
+
+	FragColor = vec4(finalColor, 1.0) * pixelColor;
 }
