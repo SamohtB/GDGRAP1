@@ -18,11 +18,13 @@ uniform float specPhong;
 in vec2 texCoord;
 in vec3 normCoord;
 in vec3 fragPos;
+in mat3 TBN;
 
 void main()
 {
 	vec3 normal = texture(norm_tex, texCoord).rgb;
 	normal = normalize(normal * 2.0 - 1.0);
+	normal = normalize(TBN * normal);
 
 	vec3 lightDir = normalize(lightPos - fragPos);
 	
@@ -36,6 +38,8 @@ void main()
 
 	float spec = pow(max(dot(reflectDir, viewDir), 0.1), specPhong);
 	vec3 specColor = spec * specStr * lightColor;
+
+	float distance = distance(lightPos, fragPos);
 
 	vec4 pixelColor = texture(tex0, texCoord);
 

@@ -72,12 +72,65 @@ void Model3D::LoadModel(std::string strMeshPath)
         &error,
         path.c_str());
 
+    std::vector<glm::vec3> tangents;
+    std::vector<glm::vec3> bitangents;
 
-    std::vector<GLuint> mesh_indices;
-
-    for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
+    for (size_t i = 0; i < shapes[0].mesh.indices.size(); i += 3)
     {
-        mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
+        tinyobj::index_t vData1 = shapes[0].mesh.indices[i];
+        tinyobj::index_t vData2 = shapes[0].mesh.indices[i + 1];
+        tinyobj::index_t vData3 = shapes[0].mesh.indices[i + 2];
+
+        glm::vec3 v1 = glm::vec3(
+            attributes.vertices[vData1.vertex_index * 3],
+            attributes.vertices[vData1.vertex_index * 3 + 1],
+            attributes.vertices[vData1.vertex_index * 3 + 2]
+        );
+
+        glm::vec3 v2 = glm::vec3(
+            attributes.vertices[vData2.vertex_index * 3],
+            attributes.vertices[vData2.vertex_index * 3 + 1],
+            attributes.vertices[vData2.vertex_index * 3 + 2]
+        );
+       
+        glm::vec3 v3 = glm::vec3(
+            attributes.vertices[vData3.vertex_index * 3],
+            attributes.vertices[vData3.vertex_index * 3 + 1],
+            attributes.vertices[vData3.vertex_index * 3 + 2]
+        );
+
+        glm::vec2 uv1 = glm::vec2(
+            attributes.texcoords[vData1.texcoord_index * 2],
+            attributes.texcoords[vData1.texcoord_index * 2 + 1]
+        );
+
+        glm::vec2 uv2 = glm::vec2(
+            attributes.texcoords[vData2.texcoord_index * 2],
+            attributes.texcoords[vData2.texcoord_index * 2 + 1]
+        );
+
+        glm::vec2 uv3 = glm::vec2(
+            attributes.texcoords[vData3.texcoord_index * 2],
+            attributes.texcoords[vData3.texcoord_index * 2 + 1]
+        );
+
+        glm::vec3 deltaPos1 = v2 - v1;
+        glm::vec3 deltaPos2 = v3 - v1;
+
+        glm::vec2 deltaUV1 = uv2 - uv1;
+        glm::vec2 deltaUV2 = uv3 - uv1;
+
+        float r = 1.0f / ((deltaUV1.x * deltaUV2.y) - (deltaUV1.y * deltaUV2.x));
+        glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+        /*glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;*/
+
+        tangents.push_back(tangent);
+        tangents.push_back(tangent);
+        tangents.push_back(tangent);
+
+        /*bitangents.push_back(bitangent);
+        bitangents.push_back(bitangent);
+        bitangents.push_back(bitangent); */
     }
 
     for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
@@ -94,7 +147,17 @@ void Model3D::LoadModel(std::string strMeshPath)
 
         fullVertexData.push_back(attributes.texcoords[vData.texcoord_index * 2]);       // U tex
         fullVertexData.push_back(attributes.texcoords[vData.texcoord_index * 2 + 1]);   // V tex
+
+        this->fullVertexData.push_back(tangents[i].x);
+        this->fullVertexData.push_back(tangents[i].y);
+        this->fullVertexData.push_back(tangents[i].z);
+
+        /*this->fullVertexData.push_back(bitangents[i].x);
+        this->fullVertexData.push_back(bitangents[i].y);
+        this->fullVertexData.push_back(bitangents[i].z);*/
     }
+
+   
 }
 
 void Model3D::VertexInit()
@@ -107,17 +170,25 @@ void Model3D::VertexInit()
 
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * this->fullVertexData.size(), this->fullVertexData.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GL_FLOAT), (void*)0);
 
     GLuint normalsPtr = 3 * sizeof(GLfloat);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)normalsPtr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GL_FLOAT), (void*)normalsPtr);
 
     GLuint uvPtr = 6 * sizeof(GLfloat);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)uvPtr);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(GL_FLOAT), (void*)uvPtr);
+
+    GLuint tangentPtr = 8 * sizeof(GLfloat);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GL_FLOAT), (void*)tangentPtr);
+
+    /*GLuint bitangentPtr = 11 * sizeof(GLfloat);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GL_FLOAT), (void*)bitangentPtr);*/
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    /*glEnableVertexAttribArray(4);*/
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -230,5 +301,5 @@ void Model3D::Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 
 
     glBindVertexArray(this->VAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 8);
+    glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 11);
 }

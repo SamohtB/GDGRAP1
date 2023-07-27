@@ -125,7 +125,8 @@ void SkyBox::Draw(glm::mat4 view_matrix, glm::mat4 projection_matrix)
     glUniformMatrix4fv(skyViewLoc, 1, GL_FALSE, glm::value_ptr(sky_view));
 
     glBindVertexArray(VAO);
-    glActiveTexture(0);
+
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, this->texture);
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);

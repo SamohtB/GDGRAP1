@@ -9,8 +9,8 @@ Game::Game()
         "3D/Texture/brickwall_normal.jpg");
     skybox = new SkyBox("Shaders/skybox.vert", "Shaders/skybox.frag");
 
-    translate = glm::vec3(0.0f, 0.0f, -5.0f);
-    scale = glm::vec3(4.f, 4.f, 1.f);
+    translate = glm::vec3(0.0f, 0.0f, 0.0f);
+    scale = glm::vec3(4.f, 4.f, 4.f);
 
     pitchTheta = 0.0f;
     yawTheta = 0.0f;
@@ -20,7 +20,7 @@ Game::Game()
     cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
     cameraCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    lightPos = glm::vec3(-10, 3, 0);
+    lightPos = glm::vec3(0.0f, 3.0f, 10.0f);
     lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
     ambientStr = 0.2f;
