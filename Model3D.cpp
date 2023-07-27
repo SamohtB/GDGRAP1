@@ -1,44 +1,42 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include "Model3D.h"
+#include "Model3D.hpp"
 
 using namespace Model;
 
-Model3D::Model3D(std::string sMeshPath, std::string sVertPath, std::string sFragPath, std::string sTexPath)
+Model3D::Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, std::string strTexPath)
 {
-    this->shaderProgram = LoadShaders(sVertPath, sFragPath);
-    this->skyboxProgram = this->LoadShaders("Shaders/skybox.vert", "Shaders/skybox.frag");
-
-	LoadModel(sMeshPath);
-
+    LoadShaders(strVertPath, strFragPath);
+	LoadModel(strMeshPath);
     VertexInit();
-    LoadTexture(sTexPath);
-
-    SkyboxInit();
-    LoadSkyboxTexture();
+    LoadTexture(strTexPath);
 }
 
-GLuint Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
+Model3D::~Model3D()
+{
+    glDeleteVertexArrays(1, &this->VAO);
+    glDeleteBuffers(1, &this->VBO);
+}
+
+void Model3D::LoadShaders(std::string strVertPath, std::string strFragPath)
 {
     //Vertex Shader
-    std::fstream vertSrc(sVertPath);
+    std::fstream vertSrc(strVertPath);
     std::stringstream vertBuff;
     vertBuff << vertSrc.rdbuf();
     std::string vertS = vertBuff.str();
     const char* v = vertS.c_str();
 
-    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertShader, 1, &v, NULL);
-    glCompileShader(vertShader);
-    
-
-    //Fragment Shader
-    std::fstream fragSrc(sFragPath);
+    std::fstream fragSrc(strFragPath);
     std::stringstream fragBuff;
     fragBuff << fragSrc.rdbuf();
     std::string fragS = fragBuff.str();
     const char* f = fragS.c_str();
 
+    GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertShader, 1, &v, NULL);
+    glCompileShader(vertShader);
+    
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragShader, 1, &f, NULL);
     glCompileShader(fragShader);
@@ -48,46 +46,34 @@ GLuint Model3D::LoadShaders(std::string sVertPath, std::string sFragPath)
     glAttachShader(shaderProgram, fragShader);
 
     glLinkProgram(shaderProgram);
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
 
-    return shaderProgram;
-}
-
-void Model3D::LoadTexture(std::string sTexPath)
-{
-    stbi_set_flip_vertically_on_load(true);
-
-    const char* path = sTexPath.c_str();
-    unsigned char* tex_bytes = stbi_load(path, &this->img_width, &this->img_height, &this->colorChannels, 0);
-
-    glGenTextures(1, &this->texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->texture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, this->img_width, this->img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
-
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    stbi_image_free(tex_bytes);
+    this->shaderProgram = shaderProgram;
 }
 
 void Model3D::LoadModel(std::string sMeshPath)
 {
     std::string path = sMeshPath;
+    tinyobj::attrib_t attributes;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> material;
     std::string warning, error;
 
     bool success = tinyobj::LoadObj(
-        &this->attributes,
+        &attributes,
         &shapes,
         &material,
         &warning,
         &error,
         path.c_str());
 
+
+    std::vector<GLuint> mesh_indices;
+
     for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
     {
-        this->mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
+        mesh_indices.push_back(shapes[0].mesh.indices[i].vertex_index);
     }
 
     for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
@@ -107,36 +93,14 @@ void Model3D::LoadModel(std::string sMeshPath)
     }
 }
 
-void Model3D::SkyboxInit()
-{
-    glGenVertexArrays(1, &this->skybox_VAO);
-    glGenBuffers(1, &this->skybox_VBO);
-    glGenBuffers(1, &this->skybox_EBO);
-
-    glBindVertexArray(skybox_VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, skybox_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(this->skyboxVertices), &this->skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (void*)0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skybox_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_INT) * 36, &skyboxIndices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-}
-
 void Model3D::VertexInit()
 {
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
 
-    //tells opengl that we're working on this VAO
     glBindVertexArray(this->VAO);
-
-    //use shaders
     glUseProgram(this->shaderProgram);
 
-    //Assign a VBO to the VAO
     glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * this->fullVertexData.size(), this->fullVertexData.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (void*)0);
@@ -153,54 +117,30 @@ void Model3D::VertexInit()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Model3D::LoadSkyboxTexture()
+void Model3D::LoadTexture(std::string sTexPath)
 {
-    glGenTextures(1, &this->skyboxTexture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, this->skyboxTexture);
-
-    //Avoid Pixilated texture
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    //Avoid Tiling
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        int w, h, skyCChannel;
-        stbi_set_flip_vertically_on_load(false);
-
-        unsigned char* data = stbi_load(facesSkybox[i].c_str(), &w, &h, &skyCChannel, 0);
-
-        if (data)
-        {
-            glTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-                0, 
-                GL_RGB, 
-                w, 
-                h,
-                0,
-                GL_RGB, 
-                GL_UNSIGNED_BYTE, 
-                data
-            );
-
-            stbi_image_free(data);
-        }
-    }
-
     stbi_set_flip_vertically_on_load(true);
+    int img_width, img_height, colorChannels;
+
+    const char* path = sTexPath.c_str();
+    unsigned char* tex_bytes = stbi_load(path, &img_width, &img_height, &colorChannels, 0);
+
+    glGenTextures(1, &this->texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, this->texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(tex_bytes);
 }
 
-void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix, 
-    glm::vec3 lightPos, glm::vec3 lightColor, float ambientStr, glm::vec3 ambientColor, glm::vec3 cameraPos,
-    float specStr, float specPhong)
+void Model3D::Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix,
+    glm::vec3 light_pos, glm::vec3 light_color, float ambient_str, glm::vec3 ambient_color,
+    float spec_str, float spec_phong, glm::vec3 camera_pos)
 {
     glUseProgram(this->shaderProgram);
 
@@ -218,60 +158,27 @@ void Model3D::DrawModel(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::
     glUniform1i(tex0Address, 0);
 
     GLuint lightAddress = glGetUniformLocation(this->shaderProgram, "lightPos");
-    glUniform3fv(lightAddress, 1, glm::value_ptr(lightPos));
+    glUniform3fv(lightAddress, 1, glm::value_ptr(light_pos));
 
     GLuint lightColorAddress = glGetUniformLocation(this->shaderProgram, "lightColor");
-    glUniform3fv(lightColorAddress, 1, glm::value_ptr(lightColor));
+    glUniform3fv(lightColorAddress, 1, glm::value_ptr(light_color));
 
     GLuint ambientStrAddress = glGetUniformLocation(this->shaderProgram, "ambientStr");
-    glUniform1f(ambientStrAddress, ambientStr);
+    glUniform1f(ambientStrAddress, ambient_str);
 
     GLuint ambientColorAddress = glGetUniformLocation(this->shaderProgram, "ambientColor");
-    glUniform3fv(ambientColorAddress, 1, glm::value_ptr(ambientColor));
-
-    GLuint cameraPosAddress = glGetUniformLocation(this->shaderProgram, "cameraPos");
-    glUniform3fv(cameraPosAddress, 1, glm::value_ptr(cameraPos));
+    glUniform3fv(ambientColorAddress, 1, glm::value_ptr(ambient_color));
 
     GLuint specStrAddress = glGetUniformLocation(this->shaderProgram, "specStr");
-    glUniform1f(specStrAddress, specStr);
+    glUniform1f(specStrAddress, spec_str);
 
     GLuint specPhongAddress = glGetUniformLocation(this->shaderProgram, "specPhong");
-    glUniform1f(specPhongAddress, specPhong);
+    glUniform1f(specPhongAddress, spec_phong);
+
+    GLuint cameraPosAddress = glGetUniformLocation(this->shaderProgram, "cameraPos");
+    glUniform3fv(cameraPosAddress, 1, glm::value_ptr(camera_pos));
 
     glBindVertexArray(this->VAO);
 
     glDrawArrays(GL_TRIANGLES, 0, this->fullVertexData.size() / 8);
-
-    //glDrawElements(
-    //    GL_TRIANGLES,
-    //    this->mesh_indices.size(),
-    //    GL_UNSIGNED_INT,
-    //    0
-    //);
-}
-
-void Model3D::DrawSkybox(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
-{
-    glUseProgram(this->skyboxProgram);
-
-    glm::mat4 sky_view = glm::mat4(1.0f);
-    sky_view = glm::mat4(glm::mat3(viewMatrix));
-
-    unsigned int skyProjectionLoc = glGetUniformLocation(this->skyboxProgram, "projection");
-    glUniformMatrix4fv(skyProjectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-    unsigned int skyViewLoc = glGetUniformLocation(this->skyboxProgram, "view");
-    glUniformMatrix4fv(skyViewLoc, 1, GL_FALSE, glm::value_ptr(sky_view));
-
-    glBindVertexArray(skybox_VAO);
-    glActiveTexture(0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, this->skyboxTexture);
-
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-}
-
-void Model3D::CleanUp()
-{
-    glDeleteVertexArrays(1, &this->VAO);
-    glDeleteBuffers(1, &this->VBO);
 }
