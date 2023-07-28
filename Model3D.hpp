@@ -24,7 +24,7 @@ namespace Model
 	{
 		public:
 			Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, 
-				std::string strTexPath, std::string strNormPath);
+				std::string strTexPath, std::string strNormPath, std::string strSecondaryMat);
 			~Model3D();
 
 			void Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix,
@@ -36,6 +36,7 @@ namespace Model
 			void LoadTexture(std::string strTexPath);
 			void LoadNormals(std::string strNormPath);
 			void LoadModel(std::string strMeshPath);
+			void LoadSecondaryTexture(std::string strSecondaryTex);
 			void VertexInit();
 
 		private:
@@ -45,6 +46,7 @@ namespace Model
 			GLuint shaderProgram;
 			GLuint texture;
 			GLuint normal_texture;
+			GLuint secondary_texture;
 	};
 }
 

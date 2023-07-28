@@ -5,13 +5,15 @@
 using namespace Model;
 
 Model3D::Model3D(std::string strMeshPath, std::string strVertPath, std::string strFragPath, 
-    std::string strTexPath, std::string strNormPath)
+    std::string strTexPath, std::string strNormPath, std::string strSecondaryTex)
 {
     LoadShaders(strVertPath, strFragPath);
 	LoadModel(strMeshPath);
     VertexInit();
     LoadTexture(strTexPath);
+    /* Own Normal Loader and Second Texture Loader */
     LoadNormals(strNormPath);
+    LoadSecondaryTexture(strSecondaryTex);
 }
 
 Model3D::~Model3D()
@@ -20,6 +22,7 @@ Model3D::~Model3D()
     glDeleteBuffers(1, &this->VBO);
     glDeleteTextures(1, &this->texture);
     glDeleteTextures(1, &this->normal_texture);
+    glDeleteTextures(1, &this->secondary_texture);
 }
 
 void Model3D::LoadShaders(std::string strVertPath, std::string strFragPath)
@@ -122,15 +125,10 @@ void Model3D::LoadModel(std::string strMeshPath)
 
         float r = 1.0f / ((deltaUV1.x * deltaUV2.y) - (deltaUV1.y * deltaUV2.x));
         glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
-        /*glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;*/
 
         tangents.push_back(tangent);
         tangents.push_back(tangent);
         tangents.push_back(tangent);
-
-        /*bitangents.push_back(bitangent);
-        bitangents.push_back(bitangent);
-        bitangents.push_back(bitangent); */
     }
 
     for (size_t i = 0; i < shapes[0].mesh.indices.size(); i++)
@@ -151,10 +149,6 @@ void Model3D::LoadModel(std::string strMeshPath)
         this->fullVertexData.push_back(tangents[i].x);
         this->fullVertexData.push_back(tangents[i].y);
         this->fullVertexData.push_back(tangents[i].z);
-
-        /*this->fullVertexData.push_back(bitangents[i].x);
-        this->fullVertexData.push_back(bitangents[i].y);
-        this->fullVertexData.push_back(bitangents[i].z);*/
     }
 
    
@@ -181,14 +175,10 @@ void Model3D::VertexInit()
     GLuint tangentPtr = 8 * sizeof(GLfloat);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GL_FLOAT), (void*)tangentPtr);
 
-    /*GLuint bitangentPtr = 11 * sizeof(GLfloat);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(GL_FLOAT), (void*)bitangentPtr);*/
-
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
-    /*glEnableVertexAttribArray(4);*/
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -253,6 +243,36 @@ void Model3D::LoadNormals(std::string strNormPath)
     stbi_image_free(tex_bytes);
 }
 
+void Model3D::LoadSecondaryTexture(std::string strSecondaryTex)
+{
+    stbi_set_flip_vertically_on_load(true);
+    int img_width, img_height, colorChannels;
+
+    const char* path = strSecondaryTex.c_str();
+    unsigned char* tex_bytes = stbi_load(path, &img_width, &img_height, &colorChannels, 0);
+
+    glGenTextures(1, &this->secondary_texture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, this->secondary_texture);
+
+    /* Gets Last 3 Characters in string */
+    std::string strFileType = strSecondaryTex.substr(strSecondaryTex.length() - 3);
+
+    /* use RGB or RGBA depending on jpg or png files */
+    if (strFileType == "png")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_bytes);
+    }
+    else if (strFileType == "jpg")
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img_width, img_height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex_bytes);
+    }
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(tex_bytes);
+}
+
 void Model3D::Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 projection_matrix,
     glm::vec3 light_pos, glm::vec3 light_color, float ambient_str, glm::vec3 ambient_color,
     float spec_str, float spec_phong, glm::vec3 camera_pos)
@@ -277,6 +297,12 @@ void Model3D::Draw(glm::mat4 transform_matrix, glm::mat4 view_matrix, glm::mat4 
     GLuint tex1Loc = glGetUniformLocation(this->shaderProgram, "norm_tex");
     glBindTexture(GL_TEXTURE_2D, this->normal_texture);
     glUniform1i(tex1Loc, 1);
+
+    /* Send Second Texture Data to Texture2 */
+    glActiveTexture(GL_TEXTURE2);
+    GLuint tex2Loc = glGetUniformLocation(this->shaderProgram, "sec_tex");
+    glBindTexture(GL_TEXTURE_2D, this->secondary_texture);
+    glUniform1i(tex2Loc, 2);
 
     GLuint lightAddress = glGetUniformLocation(this->shaderProgram, "lightPos");
     glUniform3fv(lightAddress, 1, glm::value_ptr(light_pos));

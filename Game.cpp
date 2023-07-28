@@ -5,8 +5,9 @@ using namespace Controller;
 Game::Game()
 {
     Initialize();
-    bunny = new Model3D("3D/Mesh/plane.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/Texture/brickwall.jpg",
-        "3D/Texture/brickwall_normal.jpg");
+    /* Sets yae.png as tex0, brickwall_normal as norm_tex, and brickwall as sec_tex */
+    bunny = new Model3D("3D/Models/plane.obj", "Shaders/sample.vert", "Shaders/sample.frag", "3D/Models/yae.png",
+        "3D/Models/brickwall_normal.jpg", "3D/Models/brickwall.jpg");
     skybox = new SkyBox("Shaders/skybox.vert", "Shaders/skybox.frag");
 
     translate = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -20,7 +21,7 @@ Game::Game()
     cameraPos = glm::vec3(0.0f, 0.0f, 10.0f);
     cameraCenter = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    lightPos = glm::vec3(0.0f, 3.0f, 10.0f);
+    lightPos = glm::vec3(-4.0f, 4.0f, 10.0f);
     lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
     ambientStr = 0.2f;
@@ -89,7 +90,7 @@ void Game::Run()
 
 void Game::ProcessInput()
 {
-
+    /* NO INPUT */
 }
 
 void Game::Update(float tDeltaTime)
@@ -103,7 +104,10 @@ void Game::Update(float tDeltaTime)
     transform_matrix = glm::rotate(transform_matrix, glm::radians(yawTheta), yawAxis);
     transform_matrix = glm::rotate(transform_matrix, glm::radians(rollTheta), rollAxis);
 
-    //pitchTheta += 1.0f * tDeltaTime;
+    /* Rotation Behaviour */
+    pitchTheta += 25.0f * tDeltaTime;
+    /* cap theta to 360 */
+    pitchTheta = std::fmod(pitchTheta, 360.0f);
 }
 
 void Game::Render()

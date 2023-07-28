@@ -4,6 +4,7 @@ out vec4 FragColor; //pixel color
 
 uniform sampler2D tex0;
 uniform sampler2D norm_tex;
+uniform sampler2D sec_tex;
 
 uniform vec3 lightPos;
 uniform vec3 lightColor;
@@ -36,20 +37,25 @@ void main()
 	vec3 viewDir = normalize(cameraPos - fragPos);
 	vec3 reflectDir = reflect(-lightDir, normal);
 
-	float spec = pow(max(dot(reflectDir, viewDir), 0.0), specPhong);
+	float spec = pow(max(dot(reflectDir, viewDir), 0.1), specPhong);
 	vec3 specColor = spec * specStr * lightColor;
 
 	float distance = distance(lightPos, fragPos);
-	float intensity = 50 * (1 / (distance * distance));
+	float intensity = 100 * (1 / (distance * distance));
 
 	vec4 pixelColor = texture(tex0, texCoord);
 
 	if(pixelColor.a < 0.1)
 	{
-		discard;
+		/* if alpha low enough, use sec_tex data instead */
+		pixelColor = texture(sec_tex, texCoord);
+		/* set alpha to 0.5 aswell */
+		pixelColor.a = 0.5;
 	}
 
-	vec3 finalColor = ((specColor * 3) + diffuse + ambientCol) * intensity;
+	/* intensity adjustment so object doesnt disappear if intensity is too low */
+	/* Added specColor multiplier to make it shinier */
+	vec3 finalColor = ((specColor * 5) + diffuse + ambientCol) * intensity;
 
 	FragColor = vec4(finalColor, 1.0) * pixelColor;
 }

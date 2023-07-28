@@ -4,6 +4,7 @@ using namespace Model;
 
 SkyBox::SkyBox(std::string sVertPath, std::string sFragPath)
 {
+    /* Custom Sky Box Class only loads shaders, vertices, and texture */
     LoadShaders(sVertPath, sFragPath);
     VertexInit();
     LoadTexture();
